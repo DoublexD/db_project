@@ -15,68 +15,76 @@ CREATE SCHEMA IF NOT EXISTS wsb_db DEFAULT CHARACTER SET utf8mb4;
 USE wsb_db;
 
 CREATE TABLE uczelnia (
-    uczelnia_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    uczelnia_id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     nazwa VARCHAR(200) NOT NULL,
-    ulica_i_numer VARCHAR(150) NOT NULL,
-    kod_pocztowy VARCHAR(10) NOT NULL,
+    ulica VARCHAR(100) NOT NULL,
+    nr_budynku VARCHAR(15) NOT NULL,
+    nr_lokalu VARCHAR(15) NULL,
+    kod_pocztowy CHAR(6) NOT NULL,
     miejscowosc VARCHAR(100) NOT NULL,
     telefon VARCHAR(25) NOT NULL,
     email VARCHAR(254) NOT NULL,
     sekretariat_telefon VARCHAR(25) NOT NULL,
-    sekretariat_email VARCHAR(254) NOT NULL
+    sekretariat_email VARCHAR(254) NOT NULL,
+    CHECK (kod_pocztowy REGEXP '^[0-9]{2}-[0-9]{3}$')
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE pracownik (
-    pracownik_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    uczelnia_id INT NOT NULL,
+    pracownik_id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    uczelnia_id INT UNSIGNED NOT NULL,
     imie VARCHAR(60) NOT NULL,
     nazwisko VARCHAR(100) NOT NULL,
     plec CHAR(1) NOT NULL,
     pesel CHAR(11) NOT NULL UNIQUE,
     telefon VARCHAR(25) NOT NULL,
-    adres_zamieszkania VARCHAR(250) NOT NULL,
+    ulica VARCHAR(100) NOT NULL,
+    nr_budynku VARCHAR(15) NOT NULL,
+    nr_lokalu VARCHAR(15) NULL,
+    kod_pocztowy CHAR(6) NOT NULL,
+    miejscowosc VARCHAR(100) NOT NULL,
     data_zatrudnienia DATE NOT NULL,
     data_ustania DATE NULL,
     numer_konta CHAR(26) NOT NULL,
     FOREIGN KEY (uczelnia_id) REFERENCES uczelnia (uczelnia_id),
-    CHECK (plec IN ('K','M')),
+    CHECK (plec IN ('K','M', 'I')),
     CHECK (pesel REGEXP '^[0-9]{11}$'),
     CHECK (numer_konta REGEXP '^[0-9]{26}$'),
-    CHECK (data_ustania IS NULL OR data_ustania >= data_zatrudnienia)
+    CHECK (data_ustania IS NULL OR data_ustania >= data_zatrudnienia),
+    CHECK (kod_pocztowy REGEXP '^[0-9]{2}-[0-9]{3}$')
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE funkcja (
-    funkcja_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    funkcja_id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     nazwa VARCHAR(80) NOT NULL UNIQUE,
-    pracownik_id INT NOT NULL,
+    pracownik_id INT UNSIGNED NOT NULL,
     FOREIGN KEY (pracownik_id) REFERENCES pracownik (pracownik_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE student (
-    student_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    student_id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     nr_albumu VARCHAR(20) NOT NULL UNIQUE,
     imie VARCHAR(60) NOT NULL,
     nazwisko VARCHAR(100) NOT NULL,
     plec CHAR(1) NOT NULL,
     pesel CHAR(11) NOT NULL UNIQUE,
     data_urodzenia DATE NOT NULL,
-    CHECK (plec IN ('K','M')),
+    CHECK (plec IN ('K','M', 'I')),
     CHECK (pesel REGEXP '^[0-9]{11}$')
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE grupa (
-    grupa_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    grupa_id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     nazwa VARCHAR(50) NOT NULL,
-    rocznik SMALLINT NOT NULL,
-    opiekun_id INT NOT NULL,
+    rocznik SMALLINT UNSIGNED NOT NULL,
+    opiekun_id INT UNSIGNED NOT NULL,
     UNIQUE (nazwa, rocznik),
     FOREIGN KEY (opiekun_id) REFERENCES pracownik (pracownik_id),
     CHECK (rocznik BETWEEN 1900 AND 2200)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE semestr (
-    semestr_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    rok_rozpoczecia SMALLINT NOT NULL,
+    semestr_id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    rok_rozpoczecia SMALLINT UNSIGNED NOT NULL,
     rodzaj VARCHAR(6) NOT NULL,
     data_od DATE NOT NULL,
     data_do DATE NOT NULL,
@@ -86,17 +94,17 @@ CREATE TABLE semestr (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE przedmiot (
-    przedmiot_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    przedmiot_id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     kod VARCHAR(20) NOT NULL UNIQUE,
     nazwa VARCHAR(150) NOT NULL,
     opis TEXT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE przynaleznosc (
-    przynaleznosc_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    student_id INT NOT NULL,
-    grupa_id INT NOT NULL,
-    semestr_id INT NOT NULL,
+    przynaleznosc_id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    student_id INT UNSIGNED NOT NULL,
+    grupa_id INT UNSIGNED NOT NULL,
+    semestr_id INT UNSIGNED NOT NULL,
     UNIQUE (student_id, semestr_id),
     UNIQUE (przynaleznosc_id, grupa_id, semestr_id),
     FOREIGN KEY (student_id) REFERENCES student (student_id),
@@ -105,11 +113,11 @@ CREATE TABLE przynaleznosc (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE zajecia (
-    zajecia_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    przedmiot_id INT NOT NULL,
-    grupa_id INT NOT NULL,
-    semestr_id INT NOT NULL,
-    prowadzacy_id INT NOT NULL,
+    zajecia_id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    przedmiot_id INT UNSIGNED NOT NULL,
+    grupa_id INT UNSIGNED NOT NULL,
+    semestr_id INT UNSIGNED NOT NULL,
+    prowadzacy_id INT UNSIGNED NOT NULL,
     UNIQUE (przedmiot_id, grupa_id, semestr_id),
     UNIQUE (zajecia_id, grupa_id, semestr_id),
     FOREIGN KEY (przedmiot_id) REFERENCES przedmiot (przedmiot_id),
@@ -119,19 +127,19 @@ CREATE TABLE zajecia (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE zapis (
-    zapis_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    przynaleznosc_id INT NOT NULL,
-    zajecia_id INT NOT NULL,
-    grupa_id INT NOT NULL,
-    semestr_id INT NOT NULL,
+    zapis_id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    przynaleznosc_id INT UNSIGNED NOT NULL,
+    zajecia_id INT UNSIGNED NOT NULL,
+    grupa_id INT UNSIGNED NOT NULL,
+    semestr_id INT UNSIGNED NOT NULL,
     UNIQUE (przynaleznosc_id, zajecia_id),
     FOREIGN KEY (przynaleznosc_id, grupa_id, semestr_id) REFERENCES przynaleznosc (przynaleznosc_id, grupa_id, semestr_id),
     FOREIGN KEY (zajecia_id, grupa_id, semestr_id) REFERENCES zajecia (zajecia_id, grupa_id, semestr_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE ocena_czastkowa (
-    ocena_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    zapis_id INT NOT NULL,
+    ocena_id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    zapis_id INT UNSIGNED NOT NULL,
     wartosc DECIMAL(2,1) NOT NULL,
     data_wystawienia DATE NOT NULL,
     opis VARCHAR(200) NOT NULL,
@@ -140,7 +148,7 @@ CREATE TABLE ocena_czastkowa (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE ocena_koncowa (
-    zapis_id INT NOT NULL PRIMARY KEY,
+    zapis_id INT UNSIGNED NOT NULL PRIMARY KEY,
     wartosc DECIMAL(2,1) NOT NULL,
     data_wystawienia DATE NOT NULL,
     FOREIGN KEY (zapis_id) REFERENCES zapis (zapis_id),
